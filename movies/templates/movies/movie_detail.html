@@ -1,0 +1,151 @@
+{% extends "movies/base.html" %}
+
+{% block title %}
+Results
+{% endblock %}
+
+{% block content %}
+<h1>{{ data.title }}</h1>
+<h4 style="color: gray;"><i>~{{ data.tagline }}</i></h4>
+<img src="https://image.tmdb.org/t/p/w200{{ data.poster_path }}" alt="...">
+<hr>
+<h2>Overview</h2>
+<p>{{ data.overview }}</p>
+<hr>
+<h2>Genres</h2>
+<ul>
+    {% for g in data.genres %}
+    <li>{{ g.name }}</li>
+    {% endfor %}
+</ul>
+<hr>
+<h2>General Information:</h2>
+<p>
+    <strong>Release date:</strong> {{ data.release_date }} <br>
+    <strong>Revenue:</strong> ${{ data.revenue|floatformat:"-2" }} <br>
+    <strong>Runtime: </strong> {{ data.runtime }} minutes <br>
+</p>
+<hr>
+<form method="post" action="{% url 'rate_movie' data.id %}" id="rateMovieForm">
+    {% csrf_token %}
+    <label for="rating">Rate this movie (1-10): </label>
+    <input type="number" name="rating" min="1" max="10">
+    <button type="submit">Rate</button>
+</form>
+
+<form method="post" action="{% url 'add_to_watchlist' data.id %}" id="addToWatchlistForm">
+    {% csrf_token %}
+    <button type="submit" id="addToWatchlistButton" {% if watchlist_status %}disabled{% endif %}>
+        {% if watchlist_status %}Added to Watchlist{% else %}Add to Watchlist{% endif %}
+    </button>
+</form>
+
+<!-- Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="successModalLabel">Success!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="successMessage">Operation successful.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        // Handle form submissions using AJAX
+        $('#rateMovieForm, #addToWatchlistForm').submit(function (event) {
+            event.preventDefault();
+            var form = $(this);
+
+            $.ajax({
+                type: form.attr('method'),
+                url: form.attr('action'),
+                data: form.serialize(),
+                dataType: 'json',
+                success: function (data) {
+                    // Show success message in the modal
+                    $('#successMessage').text(data.message);
+                    $('#successModal').modal('show');
+
+                    // Change button text to "Added to Watchlist" after adding to watchlist
+                    if (form.attr('id') === 'addToWatchlistForm') {
+                        $('#addToWatchlistButton').text('Added to Watchlist').prop('disabled', true);
+                    }
+                },
+                error: function (data) {
+                    // Handle errors if needed
+                }
+            });
+        });
+    });
+</script>
+<hr>
+<h2>Cast</h2>
+<div class="row">
+    {% for actor in cast %}
+    <div class="col-md-3">
+        <img src="https://image.tmdb.org/t/p/w200{{ actor.profile_path }}" alt="{{ actor.name }}">
+        <p>{{ actor.name }} as {{ actor.character }}</p>
+    </div>
+    {% endfor %}
+</div>
+<hr>
+<h2>Recommendations</h2>
+<div class="row">
+    {% for m in recommendations.results %}
+    <div class="card" style="width: 18rem;">
+        <img src="https://image.tmdb.org/t/p/w200{{ m.poster_path }}" class="card-img-top" alt="...">
+        <div class="card-body">
+            {% if not m.name %}
+            <h5 class="card-title">{{ m.title }}</h5>
+            {% else %}
+            <h5 class="card-title">{{ m.name }}</h5>
+            {% endif %}
+            <p class="card-text">{{ m.overview }}</p>
+            <a href="/{{ type }}/{{ m.id }}/" class="btn btn-primary">View Details</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<script>
+    $(document).ready(function () {
+        // Handle form submissions using AJAX
+        $('#rateMovieForm, #addToWatchlistForm').submit(function (event) {
+            event.preventDefault();
+            var form = $(this);
+
+            $.ajax({
+                type: form.attr('method'),
+                url: form.attr('action'),
+                data: form.serialize(),
+                dataType: 'html',  // Change to 'html'
+                success: function (data) {
+                    // Show success message in the modal
+                    $('#successMessage').html(data);
+                    $('#successModal').modal('show');
+
+                    // Change button text to "Added to Watchlist" after adding to watchlist
+                    if (form.attr('id') === 'addToWatchlistForm') {
+                        $('#addToWatchlistButton').text('Added to Watchlist').prop('disabled', true);
+                    }
+                },
+                error: function (data) {
+                    // Handle errors if needed
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "movies/base.html" %}
+
+{% block title %}
+Results
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    {% for m in data.results %}
+    <div class="card" style="width: 18rem;">
+        <img src="https://image.tmdb.org/t/p/w200{{ m.poster_path }}" class="card-img-top" alt="...">
+        <div class="card-body">
+            {% if not m.name %}
+            <h5 class="card-title">{{ m.title }}</h5>
+            {% else %}
+            <h5 class="card-title">{{ m.name }}</h5>
+            {% endif %}
+            <p class="card-text">{{ m.overview }}</p>
+            <a href="/{{ type }}/{{ m.id }}/" class="btn btn-primary">View Details</a>
+
+            {% if user.is_authenticated %}
+            {% with watchlist_status=moviewatchlist.user_has_movie_in_watchlist %}
+            <form method="post" action="{% url 'add_to_watchlist' m.id %}" id="addToWatchlistForm">
+                {% csrf_token %}
+                <button type="submit" id="addToWatchlistButton" {% if watchlist_status %}disabled{% endif %}>
+                    {% if watchlist_status %}Added to Watchlist{% else %}Add to Watchlist{% endif %}
+                </button>
+            </form>
+            {% endwith %}
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
